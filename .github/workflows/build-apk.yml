@@ -24,13 +24,26 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          accept-android-sdk-licenses: 'true'
-          packages: |
-            platform-tools
-            platforms;android-34
-            build-tools;34.0.0
+        run: |
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          # Check what's already installed
+          echo "=== Pre-installed SDK ==="
+          ls $ANDROID_HOME/platforms/ 2>/dev/null || echo "no platforms"
+          ls $ANDROID_HOME/build-tools/ 2>/dev/null || echo "no build-tools"
+          # Install missing packages (use the preinstalled one if available)
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list 2>/dev/null | grep "platforms;android" | head -5 || true
+          # Accept licenses
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+          # Install only if not present
+          if [ ! -d "$ANDROID_HOME/platforms/android-34" ]; then
+            echo "Installing android-34 platform..."
+            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" --no_https 2>/dev/null || \
+            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" 2>/dev/null || true
+          fi
+          echo "=== Installed SDK ==="
+          ls $ANDROID_HOME/platforms/ 2>/dev/null
+          ls $ANDROID_HOME/build-tools/ 2>/dev/null
 
       - name: Install npm dependencies
         run: npm install
