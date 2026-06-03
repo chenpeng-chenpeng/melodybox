@@ -26,15 +26,11 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          api-level: 34
-          build-tools: '34.0.0'
+          accept-android-sdk-licenses: 'true'
           packages: |
             platform-tools
             platforms;android-34
             build-tools;34.0.0
-
-      - name: Accept SDK licenses
-        run: yes | sdkmanager --licenses || true
 
       - name: Install npm dependencies
         run: npm install
