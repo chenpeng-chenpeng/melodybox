@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MelodyBox">
+  <title>MelodyBox - 无损音乐播放器</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./css/app.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+</head>
+<body>
+
+<div id="app">
+  <!-- ====== Player View ====== -->
+  <div class="view active" id="playerView">
+    <div class="album-art-container" id="albumArt">
+      <div class="default-art">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="4"/><circle cx="50" cy="36" r="14" fill="rgba(255,255,255,0.15)"/><ellipse cx="50" cy="72" rx="28" ry="14" fill="rgba(255,255,255,0.15)"/></svg>
+      </div>
+    </div>
+
+    <div class="track-info">
+      <div class="track-title" id="trackTitle">MelodyBox</div>
+      <div class="track-artist" id="trackArtist">选择一首歌曲开始播放</div>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <div class="time-labels">
+        <span id="currentTime">0:00</span>
+        <span id="totalTime">0:00</span>
+      </div>
+    </div>
+
+    <div class="controls-row" id="playerControls">
+      <button class="btn-icon" id="shuffleBtn" title="随机播放">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" fill="currentColor"/></svg>
+      </button>
+      <button class="btn-icon" id="prevBtn" title="上一首">
+        <svg viewBox="0 0 24 24" width="24" height="24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" fill="currentColor"/></svg>
+      </button>
+      <button class="btn-icon play-btn" id="playBtn" title="播放">
+        <svg viewBox="0 0 24 24" width="28" height="28"><polygon points="6,4 20,12 6,20" fill="currentColor"/></svg>
+      </button>
+      <button class="btn-icon" id="nextBtn" title="下一首">
+        <svg viewBox="0 0 24 24" width="24" height="24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" fill="currentColor"/></svg>
+      </button>
+      <button class="btn-icon" id="repeatBtn" title="循环模式">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" fill="currentColor"/></svg>
+      </button>
+    </div>
+
+    <div class="volume-row">
+      <svg viewBox="0 0 24 24" width="16" height="16" opacity="0.4"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" fill="currentColor"/></svg>
+      <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
+    </div>
+
+    <div class="action-row">
+      <button class="btn-icon" id="lyricsBtn">
+        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" fill="currentColor"/></svg>
+        歌词
+      </button>
+      <button class="btn-icon" id="downloadBtn">
+        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/></svg>
+        下载
+      </button>
+    </div>
+
+    <canvas class="visualizer-canvas" id="visualizer" width="400" height="80"></canvas>
+    <div class="lyrics-container" id="lyricsContainer"></div>
+  </div>
+
+  <!-- ====== Playlist View ====== -->
+  <div class="view" id="playlistView">
+    <div class="playlist-header">播放列表</div>
+    <div id="playlistItems"></div>
+  </div>
+
+  <!-- ====== Search View ====== -->
+  <div class="view" id="searchView">
+    <div class="search-header">
+      <input type="text" class="search-input" id="searchInput" placeholder="搜索歌曲...">
+    </div>
+    <div id="searchResults"></div>
+  </div>
+
+  <!-- ====== Settings View ====== -->
+  <div class="view" id="settingsView">
+    <div class="playlist-header">设置</div>
+    <div class="settings-section">
+      <h3>搜索 API</h3>
+      <div class="setting-item">
+        <div>
+          <div class="setting-label">自定义搜索接口</div>
+          <div class="setting-desc">JSON API 地址，返回歌曲列表</div>
+        </div>
+        <input type="text" class="setting-input" id="searchApiInput" placeholder="https://api.example.com/search">
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>插件</h3>
+      <div id="pluginList"></div>
+    </div>
+    <div class="settings-section">
+      <h3>关于</h3>
+      <div class="setting-item">
+        <div class="setting-label">MelodyBox v1.0</div>
+        <div class="setting-desc">支持 FLAC/WAV/APE 无损解码</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== Nav Bar ====== -->
+  <nav class="nav-bar">
+    <button class="nav-item active" id="navPlayer">
+      <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" fill="currentColor"/></svg>
+      <span>正在播放</span>
+    </button>
+    <button class="nav-item" id="navPlaylist">
+      <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor"/></svg>
+      <span>列表</span>
+    </button>
+    <button class="nav-item" id="navSearch">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="currentColor"/></svg>
+      <span>搜索</span>
+    </button>
+    <button class="nav-item" id="navSettings">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="currentColor"/></svg>
+      <span>设置</span>
+    </button>
+  </nav>
+
+  <!-- ====== Mini Player ====== -->
+  <div class="mini-player" id="miniPlayer" style="display:none">
+    <div class="mini-art">
+      <svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" fill="currentColor" opacity="0.3"/></svg>
+    </div>
+    <div class="mini-info">
+      <div class="mini-title" id="miniTitle">未在播放</div>
+      <div class="mini-artist" id="miniArtist"></div>
+    </div>
+    <button class="btn-icon" id="miniPlayBtn">
+      <svg viewBox="0 0 24 24" width="22" height="22"><polygon points="6,4 20,12 6,20" fill="currentColor"/></svg>
+    </button>
+  </div>
+</div>
+
+<script src="./js/app.js"></script>
+<script>
+  // Register Service Worker for PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>
